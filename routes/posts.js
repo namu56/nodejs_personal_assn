@@ -7,7 +7,7 @@ const Posts = require("../schemas/posts");
 
 router.post("/posts", async (req, res) => {
   const { user, password, title, content } = req.body;
-  console.log(user, password, title, content);
+
   if (!user || !password || !title || !content) {
     return res.status(400).json({ message: "데이터 형식이 올바르지 않습니다" });
   }
@@ -27,7 +27,6 @@ router.get("/posts", async (req, res) => {
     const posts = await Posts.find({}).select("user title createdAt ").sort({
       createdAt: -1,
     });
-    console.log(posts);
     let newPosts = [];
     posts.forEach((post) => {
       let obj = {
@@ -41,7 +40,7 @@ router.get("/posts", async (req, res) => {
     res.status(200).json({ newPosts });
   } catch (err) {
     console.error(err);
-    res.status(400).json({ mesage: "데이터 형식이 올바르지 않습니다." });
+    res.status(400).json({ message: "데이터 형식이 올바르지 않습니다." });
   }
 });
 
@@ -139,5 +138,7 @@ router.delete("/posts/:_postId", async (req, res) => {
     return res.status(500).json({ message: "서버 오류가 발생했습니다." });
   }
 });
+
+// 댓글 목록 조회 API
 
 module.exports = router;
