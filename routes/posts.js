@@ -49,7 +49,6 @@ router.get("/posts", async (req, res) => {
 
 router.get("/posts/:_postId", async (req, res) => {
   const { _postId } = req.params;
-  console.log(_postId);
   // 전체 조회 필요 있나? 한개만 조회하는 경우
   const posts = await Posts.find({});
   let newPosts = [];
@@ -87,7 +86,6 @@ router.put("/posts/:_postId", async (req, res) => {
     }
 
     const posts = await Posts.findOne({ _id: _postId });
-    console.log(posts);
 
     if (!posts) {
       return res.status
