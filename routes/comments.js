@@ -68,20 +68,18 @@ router.put("/posts/:_postId/comments/:_commentId", async (req, res) => {
   const { password, content } = req.body;
 
   try {
-    if (!password) {
-      return res
-        .status(400)
-        .json({ message: "비밀번호가 입력되지 않거나 다릅니다." });
-    }
-
     if (!content) {
       return res.status(400).json({ message: "댓글 내용을 입력해주세요" });
     }
-    const comments = await Comments.findOne({ _id: _commentId });
-
     if (!comments) {
       return res.status(404).json({ message: "댓글 조회에 실패하였습니다." });
     }
+    const comments = await Comments.findOne({ _id: _commentId });
+
+    if (comments.password !== password) {
+      return res.status(401).json({ message: "비밀번호가 다릅니다." });
+    }
+
     await Comments.updateOne(
       { _id: _commentId },
       { $set: { content: content } }
@@ -93,4 +91,26 @@ router.put("/posts/:_postId/comments/:_commentId", async (req, res) => {
   }
 });
 
+// 댓글 삭제 API
+
+router.delete("/posts/:_postId/comments/:_commentId", async (req, res) => {
+  const { _postId } = req.params;
+  const { _commentId } = req.params;
+  const { password } = req.body;
+  try {
+    const comments = await Comments.findOne({ _id: _commentId });
+    if (comments.password !== password) {
+      return res.status(400).json({ message: "비밀번호가 다릅니다." });
+    }
+    if (!comments) {
+      return res.status(404).json({ message: "댓글 조회에 실패하였습니다." });
+    } else {
+      await Comments.deleteOne({ _id: _commentId });
+      res.json({ success: true });
+    }
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "서버 오류가 발생했습니다" });
+  }
+});
 module.exports = router;
