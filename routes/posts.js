@@ -88,6 +88,7 @@ router.put("/posts/:_postId", async (req, res) => {
     }
 
     const posts = await Posts.findOne({ _id: _postId });
+    console.log(posts);
 
     if (!posts) {
       return res.status
@@ -107,4 +108,36 @@ router.put("/posts/:_postId", async (req, res) => {
     return res.status(500).json({ message: "서버 오류가 발생했습니다." });
   }
 });
+
+// 게시글 삭제 API
+
+router.delete("/posts/:_postId", async (req, res) => {
+  const { _postId } = req.params;
+  const { password, title, content } = req.body;
+
+  try {
+    if (!password || !title || !content) {
+      return res
+        .status(400)
+        .json({ message: "데이터 형식이 올바르지 않습니다." });
+    }
+
+    const posts = await Posts.findOne({ _id: _postId });
+
+    if (!posts) {
+      return res.status
+        .apply(404)
+        .json({ message: "게시글 조회에 실패했습니다." });
+    }
+    if (posts.password !== password) {
+      return res.status(401).json({ message: "비밀번호가 다릅니다." });
+    }
+    await Posts.deleteOne({ _id: _postId });
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "서버 오류가 발생했습니다." });
+  }
+});
+
 module.exports = router;
