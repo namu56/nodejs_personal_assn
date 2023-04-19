@@ -110,15 +110,9 @@ router.put("/posts/:_postId", async (req, res) => {
 
 router.delete("/posts/:_postId", async (req, res) => {
   const { _postId } = req.params;
-  const { password, title, content } = req.body;
+  const { password } = req.body;
 
   try {
-    if (!password || !title || !content) {
-      return res
-        .status(400)
-        .json({ message: "데이터 형식이 올바르지 않습니다." });
-    }
-
     const posts = await Posts.findOne({ _id: _postId });
 
     if (!posts) {
@@ -136,7 +130,5 @@ router.delete("/posts/:_postId", async (req, res) => {
     return res.status(500).json({ message: "서버 오류가 발생했습니다." });
   }
 });
-
-// 댓글 목록 조회 API
 
 module.exports = router;
