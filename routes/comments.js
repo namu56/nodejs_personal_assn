@@ -68,13 +68,13 @@ router.put("/posts/:_postId/comments/:_commentId", async (req, res) => {
   const { password, content } = req.body;
 
   try {
+    const comments = await Comments.findOne({ _id: _commentId });
     if (!content) {
       return res.status(400).json({ message: "댓글 내용을 입력해주세요" });
     }
     if (!comments) {
       return res.status(404).json({ message: "댓글 조회에 실패하였습니다." });
     }
-    const comments = await Comments.findOne({ _id: _commentId });
 
     if (comments.password !== password) {
       return res.status(401).json({ message: "비밀번호가 다릅니다." });
