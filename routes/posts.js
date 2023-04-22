@@ -117,15 +117,21 @@ router.put("/posts/:postId", authMiddleware, async (req, res) => {
       .json({ errorMessage: "게시글 내용의 형식이 일치하지 않습니다." });
     return;
   }
-
-  const post = await Posts.findOne({ userId, _id: postId });
-  if (!post) {
-    res
-      .status(404)
-      .json({ message: "게시글 수정의 권한이 존재하지 않습니다." });
-    return;
-  }
   try {
+    const post = await Posts.findOne({ userId, _id: postId });
+
+    if (!post) {
+      res
+        .status(404)
+        .json({ errorMessage: "게시글이 정상적으로 수정되지 않았습니다." });
+      return;
+    }
+    if (userId !== post.userId.toString()) {
+      res
+        .status(403)
+        .json({ errorMessage: "게시글의 수정의 권한이 존재하지 않습니다." });
+      return;
+    }
     await Posts.updateOne(
       { userId, _id: postId },
       { $set: { title: title, content: content } }
@@ -133,33 +139,36 @@ router.put("/posts/:postId", authMiddleware, async (req, res) => {
     return res.json({ message: "게시글을 수정하였습니다." });
   } catch (error) {
     console.error(error);
-    res.status(400).json({ message: "게시글 수정에 실패하였습니다." });
+    res.status(400).json({ errorMessage: "게시글 수정에 실패하였습니다." });
     return;
   }
 });
 
 // 게시글 삭제 API
 
-router.delete("/posts/:_postId", async (req, res) => {
-  const { _postId } = req.params;
-  const { password } = req.body;
+router.delete("/posts/:postId", authMiddleware, async (req, res) => {
+  const { userId } = res.locals.user;
+  const { postId } = req.params;
 
   try {
-    const posts = await Posts.findOne({ _id: _postId });
+    const post = await Posts.findOne({ userId, _id: postId });
 
-    if (!posts) {
-      return res.status
-        .apply(404)
-        .json({ message: "게시글 조회에 실패했습니다." });
+    if (!post) {
+      res.status(404).json({ errorMessage: "게시글이 존재하지 않습니다." });
+      return;
     }
-    if (posts.password !== password) {
-      return res.status(401).json({ message: "비밀번호가 다릅니다." });
+    if (userId !== post.userId.toString()) {
+      res
+        .status(403)
+        .json({ errorMessage: "게시글의 삭제 권한이 존재하지 않습니다." });
+      return;
     }
-    await Posts.deleteOne({ _id: _postId });
-    res.json({ success: true });
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ message: "서버 오류가 발생했습니다." });
+    await Posts.deleteOne({ userId, _id: postId });
+    return res.json({ message: "게시글을 삭제하였습니다." });
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ errorMessage: "게시글 작성에 실패하였습니다." });
+    return;
   }
 });
 
