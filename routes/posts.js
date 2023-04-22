@@ -69,16 +69,29 @@ router.get("/posts", authMiddleware, async (req, res) => {
 // 게시글 상세 조회
 // 제목, 작성자명, 작성 날짜, 작성 내용 조회
 
-router.get("/posts/:_postId", async (req, res) => {
-  const { _postId } = req.params;
-  console.log(typeof _postId);
+router.get("/posts/:_postId", authMiddleware, async (req, res) => {
+  const { userId, nickname } = res.locals.user;
+  const { postId } = req.params;
   try {
-    const posts = await Posts.find({});
-    const [result] = posts.filter((post) => String(post._id) === _postId);
-    return res.status(200).json({ result });
+    const post = await Posts.findOne({
+      $or: [{ userId }, { postId }],
+    });
+
+    return res.status(200).json({
+      post: {
+        postId: post.postId,
+        userId: post.userId,
+        nickname: nickname,
+        title: post.title,
+        content: post.content,
+        createdAt: post.createdAt,
+        updatedAt: post.updatedAt,
+      },
+    });
   } catch (err) {
     console.error(err);
-    return res.status(400).json({ success: "false" });
+    res.status(400).json({ success: "게시글 조회에 실패하였습니다." });
+    return;
   }
 });
 
