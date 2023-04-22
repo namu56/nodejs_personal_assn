@@ -49,26 +49,14 @@ router.get("/posts", async (req, res) => {
 
 router.get("/posts/:_postId", async (req, res) => {
   const { _postId } = req.params;
-  // 전체 조회 필요 있나? 한개만 조회하는 경우
-  const posts = await Posts.find({});
-  let newPosts = [];
-  posts.forEach((post) => {
-    let obj = {
-      _postId: post._id,
-      user: post.user,
-      title: post.title,
-      content: post.content,
-      createdAt: post.createdAt,
-    };
-    newPosts.push(obj);
-  });
+  console.log(typeof _postId);
   try {
-    const [detail] = newPosts.filter(
-      (post) => String(post._postId) === String(_postId)
-    );
-    res.json({ detail });
+    const posts = await Posts.find({});
+    const [result] = posts.filter((post) => String(post._id) === _postId);
+    return res.status(200).json({ result });
   } catch (err) {
-    res.status(400).json({ message: "데이터 형식이 올바르지 않습니다" });
+    console.error(err);
+    return res.status(400).json({ success: "false" });
   }
 });
 
@@ -85,7 +73,7 @@ router.put("/posts/:_postId", async (req, res) => {
         .json({ message: "데이터 형식이 올바르지 않습니다." });
     }
 
-    const posts = await Posts.findOne({ _id: _postId });
+    const posts = await Posts.find({ _id: _postId });
 
     if (!posts) {
       return res.status
@@ -93,6 +81,7 @@ router.put("/posts/:_postId", async (req, res) => {
         .json({ message: "게시글 조회에 실패했습니다." });
     }
     if (posts.password !== password) {
+      console.log(posts.password !== password);
       return res.status(401).json({ message: "비밀번호가 다릅니다." });
     }
     await Posts.updateOne(
