@@ -41,25 +41,28 @@ router.post("/posts", authMiddleware, async (req, res) => {
 
 // 전체 게시글 목록 조회
 
-router.get("/posts", async (req, res) => {
+router.get("/posts", authMiddleware, async (req, res) => {
+  const { userId, nickname } = res.locals.user;
+
+  const postsOfUser = await Posts.find({ userId: userId }).sort({
+    createdAt: -1,
+  });
   try {
-    const posts = await Posts.find({}).select("user title createdAt ").sort({
-      createdAt: -1,
-    });
-    let newPosts = [];
-    posts.forEach((post) => {
-      let obj = {
-        _postId: post._id.toString(),
-        user: post.user,
-        title: post.title,
-        createdAt: post.createdAt,
+    const posts = postsOfUser.map((item) => {
+      return {
+        postId: item.postId,
+        userId: item.userId,
+        nickname: nickname,
+        title: item.title,
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt,
       };
-      newPosts.push(obj);
     });
-    res.status(200).json({ newPosts });
-  } catch (err) {
+    return res.status(200).json({ posts });
+  } catch (error) {
     console.error(err);
     res.status(400).json({ message: "데이터 형식이 올바르지 않습니다." });
+    return;
   }
 });
 
