@@ -2,17 +2,14 @@ const mongoose = require("mongoose");
 
 const commentsSchema = new mongoose.Schema(
   {
-    user: {
+    comment: {
       type: String,
       require: true,
     },
-    password: {
-      type: String,
-      require: true,
-    },
-    content: {
-      type: String,
-      require: true,
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      requried: true,
     },
     postId: {
       type: mongoose.Schema.Types.ObjectId,
