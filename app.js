@@ -7,9 +7,11 @@ const commentsRouter = require("./routes/comments.js");
 const usersRouter = require("./routes/users.js");
 const loginRouter = require("./routes/login.js");
 const connect = require("./schemas/index.js");
+const cookieParser = require("cookie-parser");
 connect();
 
 app.use(express.json());
+app.use(cookieParser());
 app.use("/", [postsRouter, commentsRouter, usersRouter, loginRouter]);
 
 app.get("/", (req, res) => {

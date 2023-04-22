@@ -4,12 +4,39 @@ const router = express.Router();
 const Posts = require("../schemas/posts");
 const authMiddleware = require("../middlewares/auth-middleware.js");
 
-// 게시글 작성
+// 게시글 작성 API
 
-router.post("/posts", async (req, res) => {
-  const { userId } = res.locals.users;
-  console.log(userId);
-  res.status(201).json({ message: "게시글을 생성하였습니다." });
+router.post("/posts", authMiddleware, async (req, res) => {
+  const { userId } = res.locals.user;
+  const { title, content } = req.body;
+
+  // 데이터가 정상적으로 전달되지 않는 경우
+  if (!title || !content) {
+    res.status(412).json({ errorMessage: "데이터 형식이 올바르지 않습니다." });
+    return;
+  }
+  // title의 형식이 비정상적인 겨우
+  if (typeof title !== "string") {
+    res
+      .status(412)
+      .json({ errorMessage: "게시글 제목의 형식이 일치하지 않습니다." });
+    return;
+  }
+  // content의 형식이 비정상적인 경우
+  if (typeof content !== "string") {
+    res
+      .status(412)
+      .json({ errorMessage: "게시글 내용의 형식이 일치하지 않습니다." });
+    return;
+  }
+  try {
+    await Posts.create({ title, content, userId });
+    return res.status(201).json({ message: "게시글 작성에 성공하였습니다." });
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ errorMessage: "게시글 작성에 실패하였습니다." });
+    return;
+  }
 });
 
 // 전체 게시글 목록 조회
