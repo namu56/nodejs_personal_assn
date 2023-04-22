@@ -108,24 +108,37 @@ router.put(
 
 // 댓글 삭제 API
 
-router.delete("/posts/:_postId/comments/:_commentId", async (req, res) => {
-  const { _postId } = req.params;
-  const { _commentId } = req.params;
-  const { password } = req.body;
-  try {
-    const comments = await Comments.findOne({ _id: _commentId });
-    if (comments.password !== password) {
-      return res.status(400).json({ message: "비밀번호가 다릅니다." });
+router.delete(
+  "/posts/:postId/comments/:commentId",
+  authMiddleware,
+  async (req, res) => {
+    const { userId } = res.locals.user;
+    const { postId, commentId } = req.params;
+
+    try {
+      const post = await Posts.findOne({ _id: postId });
+      if (!post) {
+        res.status(404).json({ errorMessage: "게시글이 존재하지 않습니다." });
+        return;
+      }
+      if (userId !== post.userId.toString()) {
+        res
+          .status(403)
+          .json({ errorMessage: "댓글의 삭제 권한이 존재하지 않습니다." });
+        return;
+      }
+      const commentOfPost = await Comments.findOne({ _id: commentId });
+      if (!commentOfPost) {
+        res.status(404).json({ message: "댓글이 존재하지 않습니다." });
+        return;
+      }
+      await Comments.deleteOne({ _id: commentId });
+      return res.json({ message: "댓글을 삭제하였습니다." });
+    } catch (error) {
+      console.error(error);
+      res.status(400).json({ message: "댓글 삭제에 실패하였습니다." });
+      return;
     }
-    if (!comments) {
-      return res.status(404).json({ message: "댓글 조회에 실패하였습니다." });
-    } else {
-      await Comments.deleteOne({ _id: _commentId });
-      res.json({ success: true });
-    }
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ message: "서버 오류가 발생했습니다" });
   }
-});
+);
 module.exports = router;
