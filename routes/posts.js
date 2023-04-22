@@ -2,21 +2,13 @@ const express = require("express");
 const router = express.Router();
 
 const Posts = require("../schemas/posts");
+const authMiddleware = require("../middlewares/auth-middleware.js");
 
 // 게시글 작성
 
 router.post("/posts", async (req, res) => {
-  const { user, password, title, content } = req.body;
-
-  if (!user || !password || !title || !content) {
-    return res.status(400).json({ message: "데이터 형식이 올바르지 않습니다" });
-  }
-  await Posts.create({
-    user,
-    password,
-    title,
-    content,
-  });
+  const { userId } = res.locals.users;
+  console.log(userId);
   res.status(201).json({ message: "게시글을 생성하였습니다." });
 });
 
