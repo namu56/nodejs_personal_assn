@@ -39,11 +39,11 @@ router.post("/posts/:postId/comments", authMiddleware, async (req, res) => {
 router.get("/posts/:postId/comments", authMiddleware, async (req, res) => {
   const { userId, nickname } = res.locals.user;
   const { postId } = req.params;
-  const commentsOfPost = await Comments.find({ userId, postId }).sort({
-    createdAt: -1,
-  });
-  console.log(commentsOfPost);
+
   try {
+    const commentsOfPost = await Comments.find({ userId, postId }).sort({
+      createdAt: -1,
+    });
     const comments = commentsOfPost.map((item) => {
       return {
         commentId: item._id,
@@ -64,36 +64,47 @@ router.get("/posts/:postId/comments", authMiddleware, async (req, res) => {
 
 // 댓글 수정 API
 
-router.put("/posts/:_postId/comments/:_commentId", async (req, res) => {
-  const { _postId } = req.params;
-  const { _commentId } = req.params;
-  console.log(_commentId);
-  const { password, content } = req.body;
+router.put(
+  "/posts/:postId/comments/:commentId",
+  authMiddleware,
+  async (req, res) => {
+    const { userId } = res.locals.user;
+    const { postId, commentId } = req.params;
+    const { comment } = req.body;
 
-  try {
-    const comments = await Comments.findOne({ _id: _commentId });
-
-    if (!content) {
-      return res.status(400).json({ message: "댓글 내용을 입력해주세요" });
+    try {
+      const post = await Posts.findOne({ _id: postId });
+      if (!post) {
+        res.status(404).json({ errorMessage: "게시글이 존재하지 않습니다." });
+        return;
+      }
+      if (userId !== post.userId.toString()) {
+        res
+          .status(403)
+          .json({ errorMessage: "댓글의 수정 권한이 존재하지 않습니다." });
+        return;
+      }
+      const commentOfPost = await Comments.findOne({ _id: commentId });
+      if (!commentOfPost) {
+        res.status(404).json({ errorMessage: "댓글이 존재하지 않습니다." });
+        return;
+      }
+      if (!comment) {
+        res.status(412).json({ errorMessage: "댓글 내용을 입력해주세요" });
+        return;
+      }
+      await Comments.updateOne(
+        { _id: commentId },
+        { $set: { comment: comment } }
+      );
+      return res.json({ message: "댓글을 수정하였습니다." });
+    } catch (error) {
+      console.error(error);
+      res.status(400).json({ message: "댓글 수정에 실패하였습니다." });
+      return;
     }
-    if (!comments) {
-      return res.status(404).json({ message: "댓글 조회에 실패하였습니다." });
-    }
-
-    if (comments.password !== password) {
-      return res.status(401).json({ message: "비밀번호가 다릅니다." });
-    }
-
-    await Comments.updateOne(
-      { _id: _commentId },
-      { $set: { content: content } }
-    );
-    res.json({ success: true });
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ message: "서버 오류가 발생했습니다" });
   }
-});
+);
 
 // 댓글 삭제 API
 
