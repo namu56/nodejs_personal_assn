@@ -3,59 +3,62 @@ const router = express.Router();
 
 const Comments = require("../schemas/comments.js");
 const Posts = require("../schemas/posts.js");
+const authMiddleware = require("../middlewares/auth-middleware.js");
 
 // 댓글 생성
 
-router.post("/posts/:_postId/comments", async (req, res) => {
-  const { user, password, content } = req.body;
-  const { _postId } = req.params;
-  console.log(_postId);
+router.post("/posts/:postId/comments", authMiddleware, async (req, res) => {
+  const { userId } = res.locals.user;
+  const { postId } = req.params;
+  const { comment } = req.body;
 
   try {
-    if (!user || !password) {
-      return res
-        .status(400)
-        .json({ message: "데이터 형식이 올바르지 않습니다." });
+    const post = await Posts.findById(postId);
+    if (!post) {
+      res.status(404).json({ errorMessage: "게시글이 존재하지 않습니다." });
+      return;
     }
-    if (!content) {
-      return res.status(400).json({ message: "댓글 내용을 입력해주세요." });
+    if (!comment) {
+      res.status(400).json({ message: "댓글 내용을 입력해주세요." });
+      return;
     }
     await Comments.create({
-      user,
-      password,
-      content,
-      postId: _postId,
+      userId: userId,
+      comment,
+      postId: postId,
     });
     res.status(200).json({ message: "댓글을 생성하였습니다." });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "서버 오류가 발생했습니다." });
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ message: "댓글 작성에 실패하였습니다." });
   }
 });
 
 // 댓글 목록 조회 API
 
-router.get("/posts/:_postId/comments", async (req, res) => {
+router.get("/posts/:postId/comments", authMiddleware, async (req, res) => {
+  const { userId, nickname } = res.locals.user;
+  const { postId } = req.params;
+  const commentsOfPost = await Comments.find({ userId, postId }).sort({
+    createdAt: -1,
+  });
+  console.log(commentsOfPost);
   try {
-    const { _postId } = req.params;
-    const comments = await Comments.find({})
-      .select("user content createdAt")
-      .sort({ createdAt: -1 });
-
-    let newComments = [];
-    comments.forEach((comment) => {
-      let obj = {
-        _commentId: comment._id.toString(),
-        user: comment.user,
-        content: comment.content,
-        createdAt: comment.createdAt,
+    const comments = commentsOfPost.map((item) => {
+      return {
+        commentId: item._id,
+        userId: item.userId,
+        nickname,
+        comment: item.comment,
+        createdAt: item.createdAt,
+        updatedAt: item.updatedAt,
       };
-      newComments.push(obj);
     });
-    res.status(200).json({ newComments });
-  } catch (err) {
-    console.error(err);
-    res.status(400).json({ message: "데이터 형식이 올바르지 않습니다." });
+
+    return res.status(200).json({ comments });
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ message: "댓글 조회에 실패하였습니다." });
   }
 });
 
@@ -69,6 +72,7 @@ router.put("/posts/:_postId/comments/:_commentId", async (req, res) => {
 
   try {
     const comments = await Comments.findOne({ _id: _commentId });
+
     if (!content) {
       return res.status(400).json({ message: "댓글 내용을 입력해주세요" });
     }
