@@ -16,14 +16,14 @@ router.post("/posts", authMiddleware, async (req, res) => {
     return;
   }
   // title의 형식이 비정상적인 겨우
-  if (typeof title !== "string") {
+  if (typeof title !== "string" || title.length === 0) {
     res
       .status(412)
       .json({ errorMessage: "게시글 제목의 형식이 일치하지 않습니다." });
     return;
   }
   // content의 형식이 비정상적인 경우
-  if (typeof content !== "string") {
+  if (typeof content !== "string" || content.length === 0) {
     res
       .status(412)
       .json({ errorMessage: "게시글 내용의 형식이 일치하지 않습니다." });
