@@ -38,10 +38,9 @@ router.post("/posts/:postId/comments", authMiddleware, async (req, res) => {
 
 router.get("/posts/:postId/comments", authMiddleware, async (req, res) => {
   const { userId, nickname } = res.locals.user;
-  const { postId } = req.params;
 
   try {
-    const commentsOfPost = await Comments.find({ userId, postId }).sort({
+    const commentsOfPost = await Comments.find({ userId }).sort({
       createdAt: -1,
     });
     const comments = commentsOfPost.map((item) => {
@@ -94,7 +93,7 @@ router.put(
         return;
       }
       await Comments.updateOne(
-        { _id: commentId },
+        { userId, _id: commentId },
         { $set: { comment: comment } }
       );
       return res.json({ message: "댓글을 수정하였습니다." });
@@ -132,7 +131,7 @@ router.delete(
         res.status(404).json({ message: "댓글이 존재하지 않습니다." });
         return;
       }
-      await Comments.deleteOne({ _id: commentId });
+      await Comments.deleteOne({ userId, _id: commentId });
       return res.json({ message: "댓글을 삭제하였습니다." });
     } catch (error) {
       console.error(error);
