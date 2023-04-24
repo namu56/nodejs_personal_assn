@@ -23,9 +23,9 @@ router.post("/posts/:postId/comments", authMiddleware, async (req, res) => {
       return;
     }
     await Comments.create({
-      userId: userId,
+      userId,
       comment,
-      postId: postId,
+      postId,
     });
     res.status(200).json({ message: "댓글을 생성하였습니다." });
   } catch (error) {
