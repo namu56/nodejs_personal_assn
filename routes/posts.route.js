@@ -1,8 +1,8 @@
 const express = require("express");
 const router = express.Router();
-
-const Posts = require("../schemas/posts");
 const authMiddleware = require("../middlewares/auth-middleware.js");
+const { Op } = require("sequelize");
+const { Posts } = require("../models/index.js");
 
 // 게시글 작성 API
 
@@ -30,7 +30,12 @@ router.post("/posts", authMiddleware, async (req, res) => {
     return;
   }
   try {
-    await Posts.create({ title, content, userId });
+    await Posts.create({
+      UserId: userId,
+      title,
+      content,
+    });
+    console.log(Posts);
     return res.status(201).json({ message: "게시글 작성에 성공하였습니다." });
   } catch (error) {
     console.error(error);
@@ -44,14 +49,15 @@ router.post("/posts", authMiddleware, async (req, res) => {
 router.get("/posts", authMiddleware, async (req, res) => {
   const { userId, nickname } = res.locals.user;
 
-  const postsOfUser = await Posts.find({ userId: userId }).sort({
-    createdAt: -1,
+  const postsOfUser = await Posts.findAll({
+    order: [["createdAt", "DESC"]],
+    where: { UserId: userId },
   });
   try {
     const posts = postsOfUser.map((item) => {
       return {
         postId: item.postId,
-        userId: item.userId,
+        userId: item.UserId,
         nickname: nickname,
         title: item.title,
         createdAt: item.createdAt,
@@ -73,8 +79,12 @@ router.get("/posts/:postId", authMiddleware, async (req, res) => {
   const { userId, nickname } = res.locals.user;
   const { postId } = req.params;
   try {
-    const postOfUser = await Posts.findOne({ userId, _id: postId });
-    console.log(postOfUser);
+    const postOfUser = await Posts.findOne({
+      where: {
+        UserId: userId,
+        postId,
+      },
+    });
     const post = {
       postId: postOfUser.postId,
       userId: postOfUser.userId,
@@ -118,7 +128,7 @@ router.put("/posts/:postId", authMiddleware, async (req, res) => {
     return;
   }
   try {
-    const post = await Posts.findOne({ userId, _id: postId });
+    const post = await Posts.findOne({ where: { UserId: userId, postId } });
 
     if (!post) {
       res
@@ -126,15 +136,17 @@ router.put("/posts/:postId", authMiddleware, async (req, res) => {
         .json({ errorMessage: "게시글이 정상적으로 수정되지 않았습니다." });
       return;
     }
-    if (userId !== post.userId.toString()) {
+    if (userId !== post.UserId) {
       res
         .status(403)
         .json({ errorMessage: "게시글의 수정의 권한이 존재하지 않습니다." });
       return;
     }
-    await Posts.updateOne(
-      { userId, _id: postId },
-      { $set: { title: title, content: content } }
+    await Posts.update(
+      { title, content },
+      {
+        where: { postId },
+      }
     );
     return res.json({ message: "게시글을 수정하였습니다." });
   } catch (error) {
@@ -151,19 +163,19 @@ router.delete("/posts/:postId", authMiddleware, async (req, res) => {
   const { postId } = req.params;
 
   try {
-    const post = await Posts.findOne({ userId, _id: postId });
+    const post = await Posts.findOne({ where: { UserId: userId, postId } });
 
     if (!post) {
       res.status(404).json({ errorMessage: "게시글이 존재하지 않습니다." });
       return;
     }
-    if (userId !== post.userId.toString()) {
+    if (userId !== post.UserId) {
       res
         .status(403)
         .json({ errorMessage: "게시글의 삭제 권한이 존재하지 않습니다." });
       return;
     }
-    await Posts.deleteOne({ userId, _id: postId });
+    await Posts.destroy({ where: { postId } });
     return res.json({ message: "게시글을 삭제하였습니다." });
   } catch (error) {
     console.error(error);
