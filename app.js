@@ -2,17 +2,14 @@ const express = require("express");
 const app = express();
 const port = 3000;
 
-const postsRouter = require("./routes/posts.js");
-const commentsRouter = require("./routes/comments.js");
-const usersRouter = require("./routes/users.js");
-const loginRouter = require("./routes/login.js");
-const connect = require("./schemas/index.js");
+const postsRouter = require("./routes/posts.route.js");
+// const commentsRouter = require("./routes/comments.js");
+const usersRouter = require("./routes/users.route.js");
 const cookieParser = require("cookie-parser");
-connect();
 
 app.use(express.json());
 app.use(cookieParser());
-app.use("/", [postsRouter, commentsRouter, usersRouter, loginRouter]);
+app.use("/", [postsRouter, usersRouter]);
 
 app.get("/", (req, res) => {
   res.send("Hello World");
