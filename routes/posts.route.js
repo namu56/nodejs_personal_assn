@@ -72,7 +72,7 @@ router.get("/posts", async (req, res) => {
     return res.status(200).json({ posts });
   } catch (error) {
     console.error(error);
-    res.status(400).json({ message: "데이터 형식이 올바르지 않습니다." });
+    res.status(400).json({ errorMessage: "데이터 형식이 올바르지 않습니다." });
     return;
   }
 });
@@ -110,9 +110,9 @@ router.get("/posts/:postId", async (req, res) => {
       updatedAt: targetedPost.updatedAt,
     };
     return res.status(200).json({ post });
-  } catch (err) {
-    console.error(err);
-    res.status(400).json({ success: "게시글 조회에 실패하였습니다." });
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ errorMessage: "게시글 조회에 실패하였습니다." });
     return;
   }
 });
