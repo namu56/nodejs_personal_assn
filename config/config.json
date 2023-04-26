@@ -2,7 +2,7 @@
   "development": {
     "username": "root",
     "password": "1231qwer",
-    "database": "lv3_sequelize",
+    "database": "lv4_sequelize",
     "host": "express-database.cv0yutrlgal7.ap-northeast-2.rds.amazonaws.com",
     "dialect": "mysql"
   },
