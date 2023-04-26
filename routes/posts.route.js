@@ -80,24 +80,34 @@ router.get("/posts", async (req, res) => {
 // 게시글 상세 조회
 // 제목, 작성자명, 작성 날짜, 작성 내용 조회
 
-router.get("/posts/:postId", authMiddleware, async (req, res) => {
-  const { userId, nickname } = res.locals.user;
+router.get("/posts/:postId", async (req, res) => {
   const { postId } = req.params;
   try {
-    const postOfUser = await Posts.findOne({
-      where: {
-        UserId: userId,
-        postId,
-      },
+    const targetedPost = await Posts.findOne({
+      attributes: [
+        "postId",
+        "UserId",
+        "title",
+        "content",
+        "createdAt",
+        "updatedAt",
+      ],
+      include: [
+        {
+          model: Users,
+          attributes: ["nickname"],
+        },
+      ],
+      where: { postId },
     });
     const post = {
-      postId: postOfUser.postId,
-      userId: postOfUser.userId,
-      nickname: nickname,
-      title: postOfUser.title,
-      content: postOfUser.content,
-      createdAt: postOfUser.createdAt,
-      updatedAt: postOfUser.updatedAt,
+      postId: targetedPost.postId,
+      userId: targetedPost.UserId,
+      nickname: targetedPost.User.nickname,
+      title: targetedPost.title,
+      content: targetedPost.content,
+      createdAt: targetedPost.createdAt,
+      updatedAt: targetedPost.updatedAt,
     };
     return res.status(200).json({ post });
   } catch (err) {
