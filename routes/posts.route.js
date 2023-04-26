@@ -2,7 +2,8 @@ const express = require("express");
 const router = express.Router();
 const authMiddleware = require("../middlewares/auth-middleware.js");
 const { Op } = require("sequelize");
-const { Posts } = require("../models/index.js");
+const { Posts } = require("../models");
+const { Users } = require("../models");
 
 // 게시글 작성 API
 
@@ -46,19 +47,23 @@ router.post("/posts", authMiddleware, async (req, res) => {
 
 // 전체 게시글 목록 조회
 
-router.get("/posts", authMiddleware, async (req, res) => {
-  const { userId, nickname } = res.locals.user;
-
-  const postsOfUser = await Posts.findAll({
-    order: [["createdAt", "DESC"]],
-    where: { UserId: userId },
-  });
+router.get("/posts", async (req, res) => {
   try {
-    const posts = postsOfUser.map((item) => {
+    const AllPosts = await Posts.findAll({
+      attributes: ["postId", "UserId", "title", "createdAt", "updatedAt"],
+      include: [
+        {
+          model: Users,
+          attributes: ["nickname"],
+        },
+      ],
+      order: [["createdAt", "DESC"]],
+    });
+    const posts = AllPosts.map((item) => {
       return {
         postId: item.postId,
         userId: item.UserId,
-        nickname: nickname,
+        nickname: item.User.nickname,
         title: item.title,
         createdAt: item.createdAt,
         updatedAt: item.updatedAt,
@@ -66,7 +71,7 @@ router.get("/posts", authMiddleware, async (req, res) => {
     });
     return res.status(200).json({ posts });
   } catch (error) {
-    console.error(err);
+    console.error(error);
     res.status(400).json({ message: "데이터 형식이 올바르지 않습니다." });
     return;
   }
