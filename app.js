@@ -3,13 +3,13 @@ const app = express();
 const port = 3000;
 
 const postsRouter = require("./routes/posts.route.js");
-// const commentsRouter = require("./routes/comments.js");
+const commentsRouter = require("./routes/comments.route.js");
 const usersRouter = require("./routes/users.route.js");
 const cookieParser = require("cookie-parser");
 
 app.use(express.json());
 app.use(cookieParser());
-app.use("/", [postsRouter, usersRouter]);
+app.use("/", [postsRouter, usersRouter, commentsRouter]);
 
 app.get("/", (req, res) => {
   res.send("Hello World");
