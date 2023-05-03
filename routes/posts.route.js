@@ -101,7 +101,6 @@ router.get("/posts/like", authMiddleware, async (req, res) => {
         },
       ],
       order: [["likes", "DESC"]],
-      where: { UserId: userId },
     });
     const posts = postLike.map((item) => {
       return {
@@ -225,7 +224,7 @@ router.delete("/posts/:postId", authMiddleware, async (req, res) => {
   const { postId } = req.params;
 
   try {
-    const post = await Posts.findOne({ where: { postId } });
+    const post = await Posts.findOne({ where: { UserId: userId, postId } });
 
     if (!post) {
       res.status(404).json({ errorMessage: "게시글이 존재하지 않습니다." });
@@ -265,13 +264,17 @@ router.put("/posts/:postId/like", authMiddleware, async (req, res) => {
     //like가 존재하지 않으면
     if (!like) {
       await Likes.create({ UserId: userId, PostId: postId });
+
       await Posts.update({ likes: post.likes + 1 }, { where: { postId } });
+
       res.status(200).json({ message: "게시글의 좋아요를 등록하였습니다." });
       return;
     } else {
       // 존재한다면
       await Likes.destroy({ where: { UserId: userId, PostId: postId } });
+
       await Posts.update({ likes: post.likes - 1 }, { where: { postId } });
+
       res.status(200).json({ message: "게시글의 좋아요를 취소하였습니다." });
       return;
     }
